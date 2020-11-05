@@ -9,9 +9,16 @@ impl<T: Ord + Clone + Debug> Key for T {}
 pub trait Value: Clone {}
 impl<T: Clone> Value for T {}
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+enum Color {
+    BLACK = 0,
+    RED = 1
+}
+
 pub struct KeyValue<K: Key, V: Value> {
     left: KeyValuePtr<K, V>,
     right: KeyValuePtr<K, V>,
+    color: Color,
     key: K,
     value: V,
 }
@@ -21,6 +28,7 @@ impl<K: Key, V: Value> KeyValue<K, V> {
         KeyValue {
             left: KeyValuePtr::<K, V>::NIL,
             right: KeyValuePtr::<K, V>::NIL,
+            color: Color::RED,
             key: key,
             value: value
         }
@@ -44,6 +52,7 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
             let node = &mut (*ptr.0);
             node.left = KeyValuePtr::NIL;
             node.right = KeyValuePtr::NIL;
+            node.color = Color::RED;
             node.key.clone_from(data.key());
             node.value.clone_from(data.value());
             return ptr;
@@ -72,6 +81,18 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
 
     fn update(&mut self, data: &Self) {
         self.value.clone_from(&data.value);
+    }
+
+    fn is_black(&self) -> bool {
+        self.color == Color::BLACK
+    }
+
+    fn set_black(&mut self) {
+        self.color = Color::BLACK
+    }
+
+    fn set_red(&mut self) {
+        self.color = Color::RED
     }
 }
 

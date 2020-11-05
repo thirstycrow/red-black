@@ -16,6 +16,14 @@ pub trait Node: Sized {
     fn right_mut(&mut self) -> &mut Self::Ptr;
     fn key(&self) -> &Self::Key;
     fn update(&mut self, node: &Self);
+
+    fn is_black(&self) -> bool;
+    fn is_red(&self) -> bool {
+        !self.is_black()
+    }
+
+    fn set_black(&mut self);
+    fn set_red(&mut self);
 }
 
 pub trait NodePtr<N: Node<Ptr = Self>>: Copy {
@@ -23,6 +31,10 @@ pub trait NodePtr<N: Node<Ptr = Self>>: Copy {
     fn is_nil(&self) -> bool;
     fn node<'a>(&self) -> &'a N;
     fn node_mut<'a>(&self) -> &'a mut N;
+
+    fn is_black(&self) -> bool {
+        self.is_nil() || self.node().is_black()
+    }
 }
 
 pub struct RBTree<N: Node> {
