@@ -5,6 +5,7 @@ use crate::{Node, NodePtr, RBTree};
 use crate::kv::KeyValue;
 
 mod validate;
+mod insert;
 
 type KV32 = KeyValue<i32, i32>;
 type Color = crate::kv::Color;
@@ -77,14 +78,3 @@ impl RBTree<KV32> {
     }
 }
 
-#[test]
-fn it_works() {
-    let mut tree: RBTree<KV32> = RBTree::new();
-    for i in &[64, 32, 96, 16, 48, 80, 112, 8, 24, 40] {
-        tree.insert(&KV32::new(*i, 0));
-    }
-    assert_eq!("RBTree{size:10,tree:((((R:8),R:16,(R:24)),R:32,((R:40),R:48)),R:64,((R:80),R:96,(R:112)))}", tree.to_string());
-    println!("{}", tree);
-    assert!(matches!(tree.search(&88), None));
-    assert!(matches!(tree.search(&80).unwrap().key(), 80))
-}
