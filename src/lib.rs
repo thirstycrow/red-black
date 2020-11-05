@@ -63,6 +63,20 @@ impl<N: Node> Context<N> {
     fn ptr(&self) -> &mut N::Ptr {
         unsafe { &mut *self.current }
     }
+
+    fn left_ctx(&mut self) -> Self {
+        Context::<N> {
+            parent: Some((self as *mut Self, true)),
+            current: self.ptr().node_mut().left_mut()
+        }
+    }
+
+    fn right_ctx(&mut self) -> Self {
+        Context {
+            parent: Some((self as *mut Self, false)),
+            current: self.ptr().node_mut().right_mut()
+        }
+    }
 }
 
 pub struct RBTree<N: Node> {
@@ -109,13 +123,22 @@ impl<N: Node> RBTree<N> {
         return inserted;
     }
 
-    fn do_insert(ctx: Context<N>, node: &N) -> bool {
+    fn do_insert(mut ctx: Context<N>, node: &N) -> bool {
         let current_ptr = ctx.ptr();
         if current_ptr.is_nil() {
             *current_ptr = N::new(node);
             return true;
         }
-        false
+        let current_node = current_ptr.node_mut();
+        let next_ctx = match current_node.key().cmp(node.key()) {
+            Ordering::Equal => {
+                current_node.update(node);
+                return false;
+            }
+            Ordering::Less => { ctx.right_ctx() }
+            Ordering::Greater => { ctx.left_ctx() }
+        };
+        return Self::do_insert(next_ctx, node);
     }
 }
 
