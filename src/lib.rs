@@ -1,9 +1,10 @@
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
+mod kv;
+
 #[cfg(test)]
 mod tests;
-mod kv;
 
 pub trait Node: Sized {
     type Key: Ord + Debug;
@@ -34,6 +35,10 @@ pub trait NodePtr<N: Node<Ptr = Self>>: Copy {
 
     fn is_black(&self) -> bool {
         self.is_nil() || self.node().is_black()
+    }
+
+    fn is_red(&self) -> bool {
+        !self.is_black()
     }
 }
 
@@ -75,7 +80,7 @@ impl<N: Node> RBTree<N> {
             }
             let current_node = ptr.node_mut();
             match current_node.key().cmp(node.key()) {
-                Ordering::Equal => { current_node.update(node) }
+                Ordering::Equal => { return current_node.update(node) }
                 Ordering::Less => { ptr = current_node.right_mut() }
                 Ordering::Greater => { ptr = current_node.left_mut() }
             }

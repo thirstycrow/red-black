@@ -10,7 +10,7 @@ pub trait Value: Clone {}
 impl<T: Clone> Value for T {}
 
 #[derive(PartialEq, Eq, Clone, Copy)]
-enum Color {
+pub enum Color {
     BLACK = 0,
     RED = 1
 }
@@ -29,8 +29,8 @@ impl<K: Key, V: Value> KeyValue<K, V> {
             left: KeyValuePtr::<K, V>::NIL,
             right: KeyValuePtr::<K, V>::NIL,
             color: Color::RED,
-            key: key,
-            value: value
+            key,
+            value
         }
     }
 
@@ -59,10 +59,6 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
         }
     }
 
-    fn key(&self) -> &Self::Key {
-        &self.key
-    }
-
     fn left(&self) -> &Self::Ptr {
         &self.left
     }
@@ -77,6 +73,10 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
 
     fn right_mut(&mut self) -> &mut Self::Ptr {
         &mut self.right
+    }
+
+    fn key(&self) -> &Self::Key {
+        &self.key
     }
 
     fn update(&mut self, data: &Self) {
