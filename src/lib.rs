@@ -258,7 +258,13 @@ impl<N: Node> RBTree<N> {
 
     fn delete_node<'a>(ctx: Context<N>) -> &'a mut N {
         let node = ctx.ptr().node_mut();
-        ctx.ptr().clone_from(node.right());
+        let child = if !node.left().is_nil() { node.left() } else { node.right() };
+        ctx.ptr().clone_from(child);
+        if node.is_black() {
+            if !child.is_black() {
+                child.node_mut().set_black();
+            }
+        }
         node
     }
 
