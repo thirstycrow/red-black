@@ -184,22 +184,21 @@ impl<N: Node> RBTree<N> {
                 ctx.parent_ptr().node_mut().set_red();
                 return;
             }
-        } else if !ctx.is_root() {
-            if ctx.is_left_child() {
-                if !inserted_at_left {
-                    Self::rotate_left(ctx.ptr());
-                }
-                ctx.ptr().node_mut().set_black();
-                ctx.parent_ptr().node_mut().set_red();
-                Self::rotate_right(ctx.parent_ptr());
-            } else {
-                if inserted_at_left {
-                    Self::rotate_right(ctx.ptr());
-                }
-                ctx.ptr().node_mut().set_black();
-                ctx.parent_ptr().node_mut().set_red();
-                Self::rotate_left(ctx.parent_ptr());
+        }
+        if ctx.is_left_child() {
+            if !inserted_at_left {
+                Self::rotate_left(ctx.ptr());
             }
+            ctx.ptr().node_mut().set_black();
+            ctx.parent_ptr().node_mut().set_red();
+            Self::rotate_right(ctx.parent_ptr());
+        } else {
+            if inserted_at_left {
+                Self::rotate_right(ctx.ptr());
+            }
+            ctx.ptr().node_mut().set_black();
+            ctx.parent_ptr().node_mut().set_red();
+            Self::rotate_left(ctx.parent_ptr());
         }
     }
 

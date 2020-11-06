@@ -1,41 +1,58 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 use crate::{Node, NodePtr, RBTree};
 
 use super::KV32;
 
-impl<N: Node> RBTree<N> {
+pub(crate) type ValidationResult = Result<usize, String>;
+
+impl<N: Node + Display> Display for RBTree<N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("RBTree{{size:{},tree:{}}}", self.size, self.root.node()))
+    }
+}
+
+impl<N: Node + Display> RBTree<N> {
 
     pub(crate) fn validate(&self) -> usize {
         if !self.root.is_nil() && !self.root.node().is_black() {
             panic!("The root node should be BLACK!");
         }
-        self.validate_node(&self.root, None)
+        match self.validate_node(&self.root, None) {
+            Ok(black_depth) => { black_depth }
+            Err(message) => {
+                println!("{}", self.to_string());
+                panic!(message)
+            }
+        }
     }
 
-    fn validate_node(&self, node_ptr: &N::Ptr, parent_ptr: Option<&N::Ptr>) -> usize {
+    fn validate_node(&self, node_ptr: &N::Ptr, parent_ptr: Option<&N::Ptr>) -> ValidationResult {
         if node_ptr.is_nil() {
-            return 1;
+            return Ok(1);
         }
         let node = node_ptr.node();
         if parent_ptr.is_some() && parent_ptr.unwrap().is_red() && node.is_red() {
-            panic!("A node ({:?}) and its parent are both RED!", node.key());
+            return ValidationResult::Err(format!("A node ({:?}) and its parent are both RED!", node.key()));
         }
         if !node.left().is_nil() {
             let left_key = node.left().node().key();
             if node.key().le(left_key) {
-                panic!("A node ({:?}) is less than or equal to its left child ({:?})!", &node.key(), left_key);
+                return ValidationResult::Err(format!("A node ({:?}) is less than or equal to its left child ({:?})!", &node.key(), left_key));
             }
         }
         if !node.right().is_nil() {
             let right_key = node.right().node().key();
             if node.key().ge(right_key) {
-                panic!("A node ({:?}) is greater than or equal to its right child ({:?})!", &node.key(), right_key);
+                return ValidationResult::Err(format!("A node ({:?}) is greater than or equal to its right child ({:?})!", &node.key(), right_key));
             }
         }
-        let black_depth = self.validate_node(node.left(), Some(node_ptr));
-        if self.validate_node(node.right(), Some(node_ptr)) != black_depth {
-            panic!("A node ({:?}) has variant black depth!", node.key());
+        let black_depth = self.validate_node(node.left(), Some(node_ptr))?;
+        if self.validate_node(node.right(), Some(node_ptr))? != black_depth {
+            return ValidationResult::Err(format!("A node ({:?}) has variant black depth!", node.key()));
         }
-        if node.is_black() { black_depth + 1 } else { black_depth }
+        Ok(if node.is_black() { black_depth + 1 } else { black_depth })
     }
 }
 

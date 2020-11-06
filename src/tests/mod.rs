@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result, Write};
 
+use rand::Rng;
+
 use crate::{Node, NodePtr, RBTree};
 use crate::kv::KeyValue;
 
@@ -55,12 +57,6 @@ impl KV32 {
     }
 }
 
-impl Display for RBTree<KV32> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        f.write_fmt(format_args!("RBTree{{size:{},tree:{}}}", self.size, self.root.node()))
-    }
-}
-
 impl RBTree<KV32> {
     fn search_for_update(&mut self, at: i32) -> &mut KV32 {
         let mut current_ptr = &self.root;
@@ -78,3 +74,19 @@ impl RBTree<KV32> {
     }
 }
 
+#[test]
+fn test_random_operation() {
+    let mut rng = rand::thread_rng();
+    let mut index: RBTree<KV32> = RBTree::new();
+    let max_size = 1024;
+    for i in 0..max_size {
+        assert!(index.search(&i).is_none());
+    }
+    for _ in 0..max_size {
+        let key = rng.gen_range(0, 65536);
+        let value = key % max_size;
+        index.insert(&KV32::new(key, value));
+        index.validate();
+        assert_eq!(value, *index.search(&key).unwrap().value());
+    }
+}
