@@ -43,3 +43,15 @@ fn test_insert_3() {
     tree.validate();
     assert_eq!("RBTree{size:2,tree:((R:32),B:64)}", tree.to_string());
 }
+
+// insert case 4: red parent and uncle
+#[test]
+fn test_insert_4() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.insert(&KV32::same(32));
+    tree.insert(&KV32::same(96));
+    tree.insert(&KV32::same(16));
+    assert_eq!("RBTree{size:4,tree:(((R:16),B:32),B:64,(B:96))}", tree.to_string());
+    tree.validate();
+}

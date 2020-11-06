@@ -64,6 +64,26 @@ impl<N: Node> Context<N> {
         unsafe { &mut *self.current }
     }
 
+    fn parent_ptr(&mut self) -> &mut N::Ptr {
+        self.parent_ctx().ptr()
+    }
+
+    fn sibling_ptr(&mut self) -> &N::Ptr {
+        if self.is_left_child() {
+            self.parent_ptr().node().right()
+        } else {
+            self.parent_ptr().node().left()
+        }
+    }
+
+    fn is_left_child(&self) -> bool {
+        self.parent.unwrap().1
+    }
+
+    fn parent_ctx(&mut self) -> &Self {
+        unsafe { &*self.parent.unwrap().0 }
+    }
+
     fn left_ctx(&mut self) -> Self {
         Context::<N> {
             parent: Some((self as *mut Self, true)),
@@ -138,7 +158,23 @@ impl<N: Node> RBTree<N> {
             Ordering::Less => { ctx.right_ctx() }
             Ordering::Greater => { ctx.left_ctx() }
         };
-        return Self::do_insert(next_ctx, node);
+        let inserted = Self::do_insert(next_ctx, node);
+        if inserted && ctx.ptr().node().is_red() && next_ctx.ptr().node().is_red() {
+            Self::insert_repair(ctx)
+        }
+        inserted
+    }
+
+    fn insert_repair(mut ctx: Context<N>) {
+        if !ctx.sibling_ptr().is_nil() {
+            let sibling_node = ctx.sibling_ptr().node_mut();
+            if sibling_node.is_red() {
+                ctx.ptr().node_mut().set_black();
+                sibling_node.set_black();
+                ctx.parent_ptr().node_mut().set_red();
+                return;
+            }
+        }
     }
 }
 
