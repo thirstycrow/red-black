@@ -116,6 +116,10 @@ impl<N: Node> RBTree<N> {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
     fn root_context(&mut self) -> Context<N> {
         Context {
             parent: None,
