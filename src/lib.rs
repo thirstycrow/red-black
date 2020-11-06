@@ -76,6 +76,10 @@ impl<N: Node> Context<N> {
         }
     }
 
+    fn is_root(&self) -> bool {
+        self.parent.is_none()
+    }
+
     fn is_left_child(&self) -> bool {
         self.parent.unwrap().1
     }
@@ -137,7 +141,6 @@ impl<N: Node> RBTree<N> {
     pub fn insert(&mut self, node: &N) -> bool {
         let inserted = Self::do_insert(self.root_context(), node);
         if inserted {
-            self.root.node_mut().set_black();
             self.size += 1;
         }
         return inserted;
@@ -147,6 +150,9 @@ impl<N: Node> RBTree<N> {
         let current_ptr = ctx.ptr();
         if current_ptr.is_nil() {
             *current_ptr = N::new(node);
+            if ctx.is_root() {
+                current_ptr.node_mut().set_black();
+            }
             return true;
         }
         let current_node = current_ptr.node_mut();
@@ -159,13 +165,17 @@ impl<N: Node> RBTree<N> {
             Ordering::Greater => { ctx.left_ctx() }
         };
         let inserted = Self::do_insert(next_ctx, node);
-        if inserted && ctx.ptr().node().is_red() && next_ctx.ptr().node().is_red() {
-            Self::insert_repair(ctx)
+        if inserted && ctx.ptr().node().is_red() {
+            if ctx.is_root() {
+                ctx.ptr().node_mut().set_black();
+            } else if next_ctx.ptr().node().is_red() {
+                Self::insert_repair(ctx, next_ctx.is_left_child())
+            }
         }
         inserted
     }
 
-    fn insert_repair(mut ctx: Context<N>) {
+    fn insert_repair(mut ctx: Context<N>, inserted_at_left: bool) {
         if !ctx.sibling_ptr().is_nil() {
             let sibling_node = ctx.sibling_ptr().node_mut();
             if sibling_node.is_red() {
@@ -174,7 +184,41 @@ impl<N: Node> RBTree<N> {
                 ctx.parent_ptr().node_mut().set_red();
                 return;
             }
+        } else if !ctx.is_root() {
+            if ctx.is_left_child() {
+                if !inserted_at_left {
+                    Self::rotate_left(ctx.ptr());
+                }
+                ctx.ptr().node_mut().set_black();
+                ctx.parent_ptr().node_mut().set_red();
+                Self::rotate_right(ctx.parent_ptr());
+            } else {
+                if inserted_at_left {
+                    Self::rotate_right(ctx.ptr());
+                }
+                ctx.ptr().node_mut().set_black();
+                ctx.parent_ptr().node_mut().set_red();
+                Self::rotate_left(ctx.parent_ptr());
+            }
         }
+    }
+
+    fn rotate_left(ptr: &mut N::Ptr) {
+        let me = ptr.clone();
+        let r = me.node().right().clone();
+        let rl = r.node().left().clone();
+        *ptr = r;
+        *me.node_mut().right_mut() = rl;
+        *r.node_mut().left_mut() = me;
+    }
+
+    fn rotate_right(ptr: &mut N::Ptr) {
+        let me = ptr.clone();
+        let l = me.node().left().clone();
+        let lr = l.node().right().clone();
+        *ptr = l;
+        *me.node_mut().left_mut() = lr;
+        *l.node_mut().right_mut() = me;
     }
 }
 
