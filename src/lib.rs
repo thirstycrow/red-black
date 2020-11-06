@@ -218,7 +218,7 @@ impl<N: Node> RBTree<N> {
 
     pub fn delete(&mut self, key: &N::Key) -> bool {
         let deleted = Self::do_delete(self.root_context(), key);
-        if (deleted) {
+        if deleted {
             self.size -= 1;
         }
         return deleted
@@ -232,12 +232,34 @@ impl<N: Node> RBTree<N> {
         let current_node = current_ptr.node_mut();
         let next_ctx = match current_node.key().cmp(key) {
             Ordering::Equal => {
+                let deleted_node = if ctx.has_left_and_right() {
+                    let successor = Self::delete_left_most(ctx.right_ctx());
+                    ctx.ptr().node_mut().update(successor);
+                    successor
+                } else {
+                    Self::delete_node(ctx)
+                };
+                deleted_node.free();
                 return true;
             }
             Ordering::Less => { ctx.right_ctx() }
             Ordering::Greater => { ctx.left_ctx() }
         };
         return Self::do_delete(next_ctx, key);
+    }
+
+    fn delete_left_most<'a>(mut ctx: Context<N>) -> &'a mut N {
+        if ctx.has_left() {
+            Self::delete_left_most(ctx.left_ctx())
+        } else {
+            Self::delete_node(ctx)
+        }
+    }
+
+    fn delete_node<'a>(ctx: Context<N>) -> &'a mut N {
+        let node = ctx.ptr().node_mut();
+        ctx.ptr().clone_from(node.right());
+        node
     }
 
     fn rotate_left(ptr: &mut N::Ptr) {
