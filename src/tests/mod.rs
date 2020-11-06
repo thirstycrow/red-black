@@ -8,6 +8,7 @@ use crate::kv::KeyValue;
 
 mod validate;
 mod insert;
+mod delete;
 
 type KV32 = KeyValue<i32, i32>;
 type Color = crate::kv::Color;

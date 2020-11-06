@@ -11,6 +11,7 @@ pub trait Node: Sized {
     type Ptr: NodePtr<Self>;
 
     fn new(node: &Self) -> Self::Ptr;
+    fn free(&mut self);
     fn left(&self) -> &Self::Ptr;
     fn left_mut(&mut self) -> &mut Self::Ptr;
     fn right(&self) -> &Self::Ptr;
@@ -100,6 +101,15 @@ impl<N: Node> Context<N> {
             parent: Some((self as *mut Self, false)),
             current: self.ptr().node_mut().right_mut()
         }
+    }
+
+    fn has_left(&self) -> bool {
+        !self.ptr().node().left().is_nil()
+    }
+
+    fn has_left_and_right(&self) -> bool {
+        let node = self.ptr().node();
+        !node.left().is_nil() && !node.right().is_nil()
     }
 }
 
@@ -204,6 +214,30 @@ impl<N: Node> RBTree<N> {
             ctx.parent_ptr().node_mut().set_red();
             Self::rotate_left(ctx.parent_ptr());
         }
+    }
+
+    pub fn delete(&mut self, key: &N::Key) -> bool {
+        let deleted = Self::do_delete(self.root_context(), key);
+        if (deleted) {
+            self.size -= 1;
+        }
+        return deleted
+    }
+
+    fn do_delete(mut ctx: Context<N>, key: &N::Key) -> bool {
+        let current_ptr = ctx.ptr();
+        if current_ptr.is_nil() {
+            return false;
+        }
+        let current_node = current_ptr.node_mut();
+        let next_ctx = match current_node.key().cmp(key) {
+            Ordering::Equal => {
+                return true;
+            }
+            Ordering::Less => { ctx.right_ctx() }
+            Ordering::Greater => { ctx.left_ctx() }
+        };
+        return Self::do_delete(next_ctx, key);
     }
 
     fn rotate_left(ptr: &mut N::Ptr) {

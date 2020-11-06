@@ -59,6 +59,15 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
         }
     }
 
+    fn free(&mut self) {
+        use std::alloc::{dealloc, Layout};
+
+        unsafe {
+            let layout = Layout::new::<Self>();
+            dealloc(self as *mut Self as *mut u8, layout);
+        }
+    }
+
     fn left(&self) -> &Self::Ptr {
         &self.left
     }
