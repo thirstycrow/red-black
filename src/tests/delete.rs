@@ -106,5 +106,23 @@ fn test_delete_6() {
     tree.delete(&32);
     assert_eq!("RBTree{size:2,tree:(B:64,(R:96))}", tree.to_string());
     tree.validate();
+}
 
+
+#[test]
+fn test_delete_7() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.search_for_update(64).insert_left(&KV32::same(32)).color(BLACK);
+    tree.search_for_update(64).insert_right(&KV32::same(96)).color(BLACK);
+    tree.search_for_update(32).insert_left(&KV32::same(16)).color(BLACK);
+    tree.search_for_update(32).insert_right(&KV32::same(48)).color(BLACK);
+    tree.search_for_update(96).insert_left(&KV32::same(80)).color(BLACK);
+    tree.search_for_update(96).insert_right(&KV32::same(112)).color(BLACK);
+    tree.size = 7;
+    assert_eq!("RBTree{size:7,tree:(((B:16),B:32,(B:48)),B:64,((B:80),B:96,(B:112)))}", tree.to_string());
+    tree.validate();
+    tree.delete(&16);
+    assert_eq!("RBTree{size:6,tree:((B:32,(R:48)),B:64,((B:80),R:96,(B:112)))}", tree.to_string());
+    tree.validate();
 }
