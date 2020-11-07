@@ -65,11 +65,11 @@ impl<N: Node> Context<N> {
         unsafe { &mut *self.current }
     }
 
-    fn parent_ptr(&mut self) -> &mut N::Ptr {
+    fn parent_ptr(&self) -> &mut N::Ptr {
         self.parent_ctx().ptr()
     }
 
-    fn sibling_ptr(&mut self) -> &N::Ptr {
+    fn sibling_ptr(&self) -> &N::Ptr {
         if self.is_left_child() {
             self.parent_ptr().node().right()
         } else {
@@ -85,8 +85,12 @@ impl<N: Node> Context<N> {
         self.parent.unwrap().1
     }
 
-    fn parent_ctx(&mut self) -> &Self {
+    fn parent_ctx(&self) -> &Self {
         unsafe { &*self.parent.unwrap().0 }
+    }
+
+    fn parent_ctx_mut(&self) -> &mut Self {
+        unsafe { &mut *self.parent.unwrap().0 }
     }
 
     fn left_ctx(&mut self) -> Self {
@@ -189,7 +193,7 @@ impl<N: Node> RBTree<N> {
         inserted
     }
 
-    fn insert_repair(mut ctx: Context<N>, inserted_at_left: bool) {
+    fn insert_repair(ctx: Context<N>, inserted_at_left: bool) {
         if !ctx.sibling_ptr().is_nil() {
             let sibling_node = ctx.sibling_ptr().node_mut();
             if sibling_node.is_red() {
@@ -217,14 +221,17 @@ impl<N: Node> RBTree<N> {
     }
 
     pub fn delete(&mut self, key: &N::Key) -> bool {
-        let deleted = Self::do_delete(self.root_context(), key);
+        let mut deleted_node: N::Ptr = N::Ptr::NIL;
+        Self::do_delete(self.root_context(), key, &mut deleted_node);
+        let deleted = !deleted_node.is_nil();
         if deleted {
+            deleted_node.node_mut().free();
             self.size -= 1;
         }
-        return deleted
+        return deleted;
     }
 
-    fn do_delete(mut ctx: Context<N>, key: &N::Key) -> bool {
+    fn do_delete(mut ctx: Context<N>, key: &N::Key, deleted_node: &mut N::Ptr) -> bool {
         let current_ptr = ctx.ptr();
         if current_ptr.is_nil() {
             return false;
@@ -232,40 +239,78 @@ impl<N: Node> RBTree<N> {
         let current_node = current_ptr.node_mut();
         let next_ctx = match current_node.key().cmp(key) {
             Ordering::Equal => {
-                let deleted_node = if ctx.has_left_and_right() {
-                    let successor = Self::delete_left_most(ctx.right_ctx());
-                    ctx.ptr().node_mut().update(successor);
-                    successor
+                if ctx.has_left_and_right() {
+                    let need_repair = Self::delete_left_most(ctx.right_ctx(), deleted_node);
+                    ctx.ptr().node_mut().update(deleted_node.node());
+                    return need_repair && Self::delete_repair(ctx);
                 } else {
-                    Self::delete_node(ctx)
+                    return Self::delete_node(ctx, deleted_node);
                 };
-                deleted_node.free();
-                return true;
             }
             Ordering::Less => { ctx.right_ctx() }
             Ordering::Greater => { ctx.left_ctx() }
         };
-        return Self::do_delete(next_ctx, key);
+        Self::do_delete(next_ctx, key, deleted_node) && Self::delete_repair(ctx)
     }
 
-    fn delete_left_most<'a>(mut ctx: Context<N>) -> &'a mut N {
+    fn delete_left_most<'a>(mut ctx: Context<N>, deleted_node: &mut N::Ptr) -> bool {
         if ctx.has_left() {
-            Self::delete_left_most(ctx.left_ctx())
+            Self::delete_left_most(ctx.left_ctx(), deleted_node) && Self::delete_repair(ctx)
         } else {
-            Self::delete_node(ctx)
+            Self::delete_node(ctx, deleted_node)
         }
     }
 
-    fn delete_node<'a>(ctx: Context<N>) -> &'a mut N {
-        let node = ctx.ptr().node_mut();
-        let child = if !node.left().is_nil() { node.left() } else { node.right() };
-        ctx.ptr().clone_from(child);
-        if node.is_black() {
-            if !child.is_black() {
-                child.node_mut().set_black();
+    fn delete_node<'a>(ctx: Context<N>, deleted_node: &mut N::Ptr) -> bool {
+        *deleted_node = *ctx.ptr();
+        let n = deleted_node.node_mut();
+        let c = if !n.left().is_nil() { n.left() } else { n.right() };
+        ctx.ptr().clone_from(c);
+
+        if n.is_red() {
+            return false;
+        }
+
+        if c.is_red() {
+            c.node_mut().set_black();
+            return false;
+        }
+
+        return Self::delete_repair(ctx);
+    }
+
+    fn delete_repair(mut ctx: Context<N>) -> bool {
+        if ctx.is_root() {
+            return false;
+        }
+
+        let p = ctx.parent_ptr();
+        let s = ctx.sibling_ptr();
+        if s.is_red() {
+            p.node_mut().set_red();
+            s.node_mut().set_black();
+            if ctx.is_left_child() {
+                Self::rotate_left(p);
+                ctx = ctx.parent_ctx_mut().left_ctx().left_ctx();
+            } else {
+                Self::rotate_right(p);
+                ctx = ctx.parent_ctx_mut().right_ctx().right_ctx();
             }
         }
-        node
+
+        let p = ctx.parent_ptr();
+        let s = ctx.sibling_ptr();
+        if s.is_black() && s.node().left().is_black() && s.node().right().is_black() {
+            if p.is_black() {
+                s.node_mut().set_red();
+                return true;
+            }
+            s.node_mut().set_red();
+            p.node_mut().set_black();
+            return false;
+        }
+
+        return false;
     }
 
     fn rotate_left(ptr: &mut N::Ptr) {
