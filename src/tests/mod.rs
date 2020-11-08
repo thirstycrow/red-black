@@ -73,6 +73,16 @@ impl RBTree<KV32> {
             }
         }
     }
+
+    fn insert_left(&mut self, at: i32, key: i32, color: Color) {
+        self.search_for_update(at).insert_left(&KV32::same(key)).color(color);
+        self.size += 1
+    }
+
+    fn insert_right(&mut self, at: i32, key: i32, color: Color) {
+        self.search_for_update(at).insert_right(&KV32::same(key)).color(color);
+        self.size += 1
+    }
 }
 
 #[test]
