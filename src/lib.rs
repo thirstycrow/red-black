@@ -310,6 +310,20 @@ impl<N: Node> RBTree<N> {
             return false;
         }
 
+        if ctx.is_left_child() {
+            if s.node().right().is_black() {
+                s.node_mut().set_red();
+                s.node().left().node_mut().set_black();
+                Self::rotate_right(s);
+            }
+        } else {
+            if s.node().left().is_black() {
+                s.node_mut().set_red();
+                s.node().right().node_mut().set_black();
+                Self::rotate_left(s);
+            }
+        }
+
         if p.node().is_red() {
             s.node_mut().set_red();
             p.node_mut().set_black();
