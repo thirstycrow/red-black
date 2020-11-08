@@ -157,3 +157,45 @@ fn test_delete_7() {
     assert_eq!("RBTree{size:6,tree:((B:32,(R:48)),B:64,((B:80),R:96,(B:112)))}", tree.to_string());
     tree.validate();
 }
+
+// delete case 8
+//
+//       B64                     B96
+//    ┌───┴───┐               ┌───┴───┐
+//   B32     B96      =>     B64     B112
+//    ↑       └──┐
+//   DEL        R112
+#[test]
+fn test_delete_8_left() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.insert_left(64, 32, BLACK);
+    tree.insert_right(64, 96, BLACK);
+    tree.insert_right(96, 112, RED);
+    assert_eq!("RBTree{size:4,tree:((B:32),B:64,(B:96,(R:112)))}", tree.to_string());
+    tree.validate();
+    tree.delete(&32);
+    assert_eq!("RBTree{size:3,tree:((B:64),B:96,(B:112))}", tree.to_string());
+    tree.validate();
+}
+
+// delete case 8
+//
+//          B64                     B32
+//       ┌───┴───┐               ┌───┴───┐
+//      B32     B96      =>     B16     B64
+//    ┌──┘       ↑
+//   R16        DEL
+#[test]
+fn test_delete_8_right() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.insert_left(64, 32, BLACK);
+    tree.insert_left(32, 16, RED);
+    tree.insert_right(64, 96, BLACK);
+    assert_eq!("RBTree{size:4,tree:(((R:16),B:32),B:64,(B:96))}", tree.to_string());
+    tree.validate();
+    tree.delete(&96);
+    assert_eq!("RBTree{size:3,tree:((B:16),B:32,(B:64))}", tree.to_string());
+    tree.validate();
+}

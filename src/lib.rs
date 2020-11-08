@@ -69,11 +69,11 @@ impl<N: Node> Context<N> {
         self.parent_ctx().ptr()
     }
 
-    fn sibling_ptr(&self) -> &N::Ptr {
+    fn sibling_ptr(&self) -> &mut N::Ptr {
         if self.is_left_child() {
-            self.parent_ptr().node().right()
+            self.parent_ptr().node_mut().right_mut()
         } else {
-            self.parent_ptr().node().left()
+            self.parent_ptr().node_mut().left_mut()
         }
     }
 
@@ -310,6 +310,17 @@ impl<N: Node> RBTree<N> {
             return false;
         }
 
+        if p.node().is_red() {
+            s.node_mut().set_red();
+            p.node_mut().set_black();
+        }
+        if ctx.is_left_child() {
+            s.node_mut().right_mut().node_mut().set_black();
+            Self::rotate_left(p);
+        } else {
+            s.node_mut().left_mut().node_mut().set_black();
+            Self::rotate_right(p);
+        }
         return false;
     }
 
