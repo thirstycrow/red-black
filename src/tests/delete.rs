@@ -85,7 +85,7 @@ fn test_delete_5_left() {
     tree.insert_right(96, 112, BLACK);
     assert_eq!("RBTree{size:5,tree:((B:32),B:64,((B:80),R:96,(B:112)))}", tree.to_string());
     tree.validate();
-    tree.delete(&32);
+    assert_eq!(true, tree.delete(&32));
     assert_eq!("RBTree{size:4,tree:((B:64,(R:80)),B:96,(B:112))}", tree.to_string());
     tree.validate();
 }
@@ -107,7 +107,7 @@ fn test_delete_5_right() {
     tree.insert_left(32, 16, BLACK);
     assert_eq!("RBTree{size:5,tree:(((B:16),R:32,(B:48)),B:64,(B:96))}", tree.to_string());
     tree.validate();
-    tree.delete(&96);
+    assert_eq!(true, tree.delete(&96));
     assert_eq!("RBTree{size:4,tree:((B:16),B:32,((R:48),B:64))}", tree.to_string());
     tree.validate();
 }
@@ -127,7 +127,7 @@ fn test_delete_6() {
     tree.insert_right(64, 96, BLACK);
     assert_eq!("RBTree{size:3,tree:((B:32),B:64,(B:96))}", tree.to_string());
     tree.validate();
-    tree.delete(&32);
+    assert_eq!(true, tree.delete(&32));
     assert_eq!("RBTree{size:2,tree:(B:64,(R:96))}", tree.to_string());
     tree.validate();
 }
@@ -153,7 +153,7 @@ fn test_delete_7() {
     tree.insert_right(96, 112, BLACK);
     assert_eq!("RBTree{size:7,tree:(((B:16),B:32,(B:48)),B:64,((B:80),B:96,(B:112)))}", tree.to_string());
     tree.validate();
-    tree.delete(&16);
+    assert_eq!(true, tree.delete(&16));
     assert_eq!("RBTree{size:6,tree:((B:32,(R:48)),B:64,((B:80),R:96,(B:112)))}", tree.to_string());
     tree.validate();
 }
@@ -174,7 +174,7 @@ fn test_delete_8_left() {
     tree.insert_right(96, 112, RED);
     assert_eq!("RBTree{size:4,tree:((B:32),B:64,(B:96,(R:112)))}", tree.to_string());
     tree.validate();
-    tree.delete(&32);
+    assert_eq!(true, tree.delete(&32));
     assert_eq!("RBTree{size:3,tree:((B:64),B:96,(B:112))}", tree.to_string());
     tree.validate();
 }
@@ -195,7 +195,7 @@ fn test_delete_8_right() {
     tree.insert_right(64, 96, BLACK);
     assert_eq!("RBTree{size:4,tree:(((R:16),B:32),B:64,(B:96))}", tree.to_string());
     tree.validate();
-    tree.delete(&96);
+    assert_eq!(true, tree.delete(&96));
     assert_eq!("RBTree{size:3,tree:((B:16),B:32,(B:64))}", tree.to_string());
     tree.validate();
 }
@@ -216,7 +216,7 @@ fn test_delete_9_left() {
     tree.insert_left(96, 80, RED);
     assert_eq!("RBTree{size:4,tree:((B:32),B:64,((R:80),B:96))}", tree.to_string());
     tree.validate();
-    tree.delete(&32);
+    assert_eq!(true, tree.delete(&32));
     assert_eq!("RBTree{size:3,tree:((B:64),B:80,(B:96))}", tree.to_string());
     tree.validate();
 }
@@ -238,7 +238,7 @@ fn test_delete_9_right() {
     tree.insert_right(32, 48, RED);
     assert_eq!("RBTree{size:4,tree:((B:32,(R:48)),B:64,(B:96))}", tree.to_string());
     tree.validate();
-    tree.delete(&96);
+    assert_eq!(true, tree.delete(&96));
     assert_eq!("RBTree{size:3,tree:((B:32),B:48,(B:64))}", tree.to_string());
     tree.validate();
 }
