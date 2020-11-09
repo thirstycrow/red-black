@@ -10,9 +10,9 @@ pub(crate) type ValidationResult = Result<usize, String>;
 impl<N: Node + Display> Display for RBTree<N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if self.root.is_nil() {
-            f.write_fmt(format_args!("RBTree{{size:{}}}", self.size))
+            f.write_fmt(format_args!("RBTree{{size:{}}}", self.size()))
         } else {
-            f.write_fmt(format_args!("RBTree{{size:{},tree:{}}}", self.size, self.root.node()))
+            f.write_fmt(format_args!("RBTree{{size:{},tree:{}}}", self.size(), self.root.node()))
         }
     }
 }

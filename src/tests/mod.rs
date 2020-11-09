@@ -83,6 +83,14 @@ impl RBTree<KV32> {
         self.search_for_update(at).insert_right(&KV32::same(key)).color(color);
         self.size += 1
     }
+
+    fn insert_at(&mut self, at: i32, key: i32, color: Color) {
+        if at < key {
+            self.insert_right(at, key, color)
+        } else {
+            self.insert_left(at, key, color)
+        }
+    }
 }
 
 #[test]
