@@ -89,6 +89,7 @@ impl<K: Key, V: Value> Node for KeyValue<K, V> {
     }
 
     fn update(&mut self, data: &Self) {
+        self.key.clone_from(&data.key);
         self.value.clone_from(&data.value);
     }
 

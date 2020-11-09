@@ -240,8 +240,8 @@ impl<N: Node> RBTree<N> {
         let next_ctx = match current_node.key().cmp(key) {
             Ordering::Equal => {
                 if ctx.has_left_and_right() {
+                    (*deleted_node).clone_from(ctx.ptr());
                     let need_repair = Self::delete_left_most(ctx.right_ctx(), deleted_node);
-                    ctx.ptr().node_mut().update(deleted_node.node());
                     return need_repair && Self::delete_repair(ctx);
                 } else {
                     return Self::delete_node(ctx, deleted_node);
@@ -257,6 +257,7 @@ impl<N: Node> RBTree<N> {
         if ctx.has_left() {
             Self::delete_left_most(ctx.left_ctx(), deleted_node) && Self::delete_repair(ctx)
         } else {
+            (*deleted_node).node_mut().update(ctx.ptr().node());
             Self::delete_node(ctx, deleted_node)
         }
     }

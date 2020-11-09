@@ -221,7 +221,6 @@ fn test_delete_9_left() {
     tree.validate();
 }
 
-
 // delete case 9
 //
 //        B64                      B48
@@ -240,5 +239,50 @@ fn test_delete_9_right() {
     tree.validate();
     assert_eq!(true, tree.delete(&96));
     assert_eq!("RBTree{size:3,tree:((B:32),B:48,(B:64))}", tree.to_string());
+    tree.validate();
+}
+
+// delete case 10: the deleted node has 2 non leaf children
+//
+//  DEL → B64                      B80
+//    ┌────┴────┐               ┌───┴───┐
+//   B32       R96      =>     B32     B96
+//           ┌──┴──┐                    └──┐
+//          B80   B112                    R112
+#[test]
+fn test_delete_10() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.insert_left(64, 32, BLACK);
+    tree.insert_right(64, 96, RED);
+    tree.insert_left(96, 80, BLACK);
+    tree.insert_right(96, 112, BLACK);
+    assert_eq!("RBTree{size:5,tree:((B:32),B:64,((B:80),R:96,(B:112)))}", tree.to_string());
+    tree.validate();
+    assert_eq!(true, tree.delete(&64));
+    assert_eq!("RBTree{size:4,tree:((B:32),B:80,(B:96,(R:112)))}", tree.to_string());
+    tree.validate();
+}
+
+// delete case 11: the node to delete has 2 non leaf children, and rotated to
+// somewhere else
+//
+//    DEL → B64                     B32
+//      ┌────┴────┐              ┌───┴───┐
+//     B32       B96    =>      B16     B96
+//   ┌──┴──┐                          ┌──┘
+//  R16   R48                        R48
+#[test]
+fn test_delete_11() {
+    let mut tree: RBTree<KV32> = RBTree::new();
+    tree.insert(&KV32::same(64));
+    tree.insert_left(64, 32, BLACK);
+    tree.insert_right(64, 96, BLACK);
+    tree.insert_left(32, 16, RED);
+    tree.insert_right(32, 48, RED);
+    assert_eq!("RBTree{size:5,tree:(((R:16),B:32,(R:48)),B:64,(B:96))}", tree.to_string());
+    tree.validate();
+    assert_eq!(true, tree.delete(&64));
+    assert_eq!("RBTree{size:4,tree:((B:16),B:32,((R:48),B:96))}", tree.to_string());
     tree.validate();
 }

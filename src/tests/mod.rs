@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result, Write};
 
-use rand::Rng;
+use rand::seq::SliceRandom;
 
 use crate::{Node, NodePtr, RBTree};
 use crate::kv::KeyValue;
@@ -89,15 +89,26 @@ impl RBTree<KV32> {
 fn test_random_operation() {
     let mut rng = rand::thread_rng();
     let mut index: RBTree<KV32> = RBTree::new();
-    let max_size = 1024;
-    for i in 0..max_size {
-        assert!(index.search(&i).is_none());
-    }
-    for _ in 0..max_size {
-        let key = rng.gen_range(0, 65536);
-        let value = key % max_size;
-        index.insert(&KV32::new(key, value));
-        index.validate();
-        assert_eq!(value, *index.search(&key).unwrap().value());
+    let max_key = 1023;
+
+    let mut keys: Vec<i32> = (0..max_key).collect();
+
+    for _ in 0..10 {
+        keys.shuffle(&mut rng);
+        for k in keys.iter() {
+            assert!(index.insert(&KV32::same(*k)));
+            index.validate();
+        }
+
+        keys.shuffle(&mut rng);
+        for k in keys.iter() {
+            assert_eq!(k, index.search(k).unwrap().value());
+        }
+
+        keys.shuffle(&mut rng);
+        for k in keys.iter() {
+            assert!(index.delete(&k));
+            index.validate();
+        }
     }
 }
